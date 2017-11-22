@@ -1,32 +1,24 @@
 package io.supercharge.securityworkshop;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
 
-import okhttp3.OkHttpClient;
-import okhttp3.logging.HttpLoggingInterceptor;
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
-import retrofit2.Retrofit;
+import io.reactivex.android.schedulers.AndroidSchedulers;
 
 public class MainActivity extends AppCompatActivity {
 
     private EditText emailView;
     private EditText passwordView;
 
-    private Api api;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setupViews();
-
-        setupNetworking();
     }
 
     private void setupViews() {
@@ -48,38 +40,24 @@ public class MainActivity extends AppCompatActivity {
         emailSignInButton.setOnClickListener(view -> login());
     }
 
-    private void setupNetworking() {
-        HttpLoggingInterceptor loggingInterceptor = new HttpLoggingInterceptor();
-        loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
-
-        OkHttpClient okHttpClient = new OkHttpClient.Builder()
-                .addInterceptor(loggingInterceptor)
-                .build();
-
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("http://hello.com")
-                .client(okHttpClient)
-                .build();
-
-        api = retrofit.create(Api.class);
-    }
-
     private void login() {
         String email = emailView.getText().toString();
         String password = passwordView.getText().toString();
 
-        api.login(email, password).enqueue(new Callback<Void>() {
+        ApiManager apiManager = ApiManager.getInstance();
 
-            @Override
-            public void onResponse(Call<Void> call, Response<Void> response) {
-                // TODO
-            }
+        apiManager.setCredentials(email, password);
 
-            @Override
-            public void onFailure(Call<Void> call, Throwable t) {
-                // TODO
-            }
-        });
+        apiManager.getApi().authenticate(new AuthenticationRequest())
+                .observeOn(AndroidSchedulers.mainThread())
+                .doFinally(apiManager::clearCredentials)
+                .subscribe(authenticationResponse -> {
+                    apiManager.setToken(authenticationResponse.getToken());
+
+                    Intent intent = new Intent(this, UserActivity.class);
+                    startActivity(intent);
+                    finish();
+                }, Throwable::printStackTrace);
     }
 
 }

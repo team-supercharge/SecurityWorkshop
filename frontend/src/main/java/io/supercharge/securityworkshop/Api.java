@@ -1,13 +1,15 @@
 package io.supercharge.securityworkshop;
 
-import retrofit2.Call;
-import retrofit2.http.Field;
-import retrofit2.http.FormUrlEncoded;
+import io.reactivex.Single;
+import retrofit2.http.Body;
+import retrofit2.http.GET;
 import retrofit2.http.POST;
 
 public interface Api {
 
-    @FormUrlEncoded
-    @POST("login")
-    Call<Void> login(@Field("email") String email, @Field("password") String password);
+    @POST("authorizations")
+    Single<AuthenticationResponse> authenticate(@Body AuthenticationRequest request);
+
+    @GET("user")
+    Single<UserResponse> getUser();
 }
