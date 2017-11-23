@@ -3,8 +3,16 @@ package io.supercharge.securityworkshop;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+
 import io.reactivex.schedulers.Schedulers;
-import okhttp3.CertificatePinner;
 import okhttp3.Credentials;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
@@ -29,10 +37,41 @@ public class ApiManager {
 
         interceptor = new AuthenticationInterceptor();
 
+        X509TrustManager trustManager = new X509TrustManager() {
+            @Override
+            public void checkClientTrusted(java.security.cert.X509Certificate[] chain, String authType) throws CertificateException {
+            }
+
+            @Override
+            public void checkServerTrusted(java.security.cert.X509Certificate[] chain, String authType) throws CertificateException {
+            }
+
+            @Override
+            public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                return new java.security.cert.X509Certificate[]{};
+            }
+        };
+
+        TrustManager[] trustManagers = {trustManager};
+
+        // Install the all-trusting trust manager
+        SSLContext sslContext = null;
+        try {
+            sslContext = SSLContext.getInstance("SSL");
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        try {
+            sslContext.init(null, trustManagers, new java.security.SecureRandom());
+        } catch (KeyManagementException e) {
+            e.printStackTrace();
+        }
+        // Create an ssl socket factory with our all-trusting manager
+        final SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
+
         OkHttpClient okHttpClient = new OkHttpClient.Builder()
-                .certificatePinner(new CertificatePinner.Builder()
-                        .add("api.github.com", "sha256/VRtYBz1boKOXjChfZYssN1AeNZCjywl77l2RTl/v380=")
-                        .build())
+                .sslSocketFactory(sslSocketFactory, trustManager)
+                .hostnameVerifier((hostname, session) -> true)
                 .addInterceptor(interceptor)
                 .addInterceptor(loggingInterceptor)
                 .build();
