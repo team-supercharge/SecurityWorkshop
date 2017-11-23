@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.reactivex.schedulers.Schedulers;
+import okhttp3.CertificatePinner;
 import okhttp3.Credentials;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
@@ -29,6 +30,9 @@ public class ApiManager {
         interceptor = new AuthenticationInterceptor();
 
         OkHttpClient okHttpClient = new OkHttpClient.Builder()
+                .certificatePinner(new CertificatePinner.Builder()
+                        .add("api.github.com", "sha256/VRtYBz1boKOXjChfZYssN1AeNZCjywl77l2RTl/v380=")
+                        .build())
                 .addInterceptor(interceptor)
                 .addInterceptor(loggingInterceptor)
                 .build();
