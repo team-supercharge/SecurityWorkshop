@@ -25,6 +25,8 @@ android {
         targetSdkVersion 26
         versionCode 1
         versionName "1.0"
+
+        buildConfigField("String", "SAFETYNET_API_KEY", "\"AIzaSyCHAA0FPvbOpvtbeGKxrYPB5Nx9kKAI8TQ\"")
     }
 
     signingConfigs {
@@ -60,4 +62,6 @@ dependencies {
     implementation 'com.squareup.okhttp3:logging-interceptor:3.9.1'
     implementation 'io.reactivex.rxjava2:rxandroid:2.0.1'
     implementation 'io.reactivex.rxjava2:rxjava:2.1.6'
+
+    implementation "com.google.android.gms:play-services-safetynet:11.6.2"
 }

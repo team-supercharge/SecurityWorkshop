@@ -16,6 +16,11 @@ public class AuthenticationInterceptor implements Interceptor {
     @Override
     public Response intercept(Chain chain) throws IOException {
         Request request = chain.request();
+
+        if (!request.url().toString().contains("api.github.com")) {
+            return chain.proceed(request);
+        }
+
         Request authenticatedRequest = request.newBuilder()
                 .header("Authorization", createAuthenticationHeader()).build();
         return chain.proceed(authenticatedRequest);
